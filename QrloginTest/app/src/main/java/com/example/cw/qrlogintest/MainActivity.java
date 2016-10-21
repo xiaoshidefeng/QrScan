@@ -1,10 +1,10 @@
 package com.example.cw.qrlogintest;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -14,7 +14,8 @@ import android.widget.Toast;
 
 import com.xys.libzxing.zxing.activity.CaptureActivity;
 
-import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,13 +36,24 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvResult;
 
     //登录接口
-    private String loninUrl="";
+    public static String loninUrl="";
 
     //获取的账号
     private String account=null;
 
     //获取的密码
     private  String password=null;
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            if (msg.what==0){
+                String responses =(String) msg.obj;
+                //显示结果
+                tvResult.setText(responses);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +72,12 @@ public class MainActivity extends AppCompatActivity {
                         tvResult.setText("null");
                         return;
                     }
-                    sendHttpURLconnection();
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("email",account);
+                    params.put("password",password);
+                    tvResult.setText(HttpUtil.submitPostData(params, "utf-8"));
+                    //tvResult.setText("asdads");
+                    //sendHttpURLconnection();
 
                 }
 
@@ -76,17 +93,48 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void sendHttpURLconnection() {
-        //开启子线程访问网络
-        new Thread(new Runnable() {
-            @TargetApi(Build.VERSION_CODES.KITKAT)
-            @Override
-            public void run() {
-                HttpURLConnection connection = null;
-
-            }
-        });
-    }
+    /////////////////////////////////////////////////////
+//    private void sendHttpURLconnection() {
+//        //开启子线程访问网络
+//        new Thread(new Runnable() {
+//            @TargetApi(Build.VERSION_CODES.KITKAT)
+//            @Override
+//            public void run() {
+//                HttpURLConnection connection = null;
+//                try {
+//                    URL url = new URL(loninUrl);
+////                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+////                    // 设置请求的方式
+////                    urlConnection.setRequestMethod("POST");
+////                    // 设置请求的超时时间
+////                    urlConnection.setReadTimeout(5000);
+////                    urlConnection.setConnectTimeout(5000);
+////                    // 传递的数据
+////                    String data = "email=" + URLEncoder.encode(account, "UTF-8")
+////                            + "&password=" + URLEncoder.encode(password, "UTF-8");
+////                    urlConnection.setDoOutput(true); // 发送POST请求必须设置允许输出
+////                    urlConnection.setDoInput(true); // 发送POST请求必须设置允许输入
+////                    DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+////                    out.writeBytes(data);
+////                    InputStream in = connection.getInputStream();
+////                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+////                    StringBuilder response = new StringBuilder();
+////                    String line;
+////                    while ((line = reader.readLine()) != null) { response.append(line); }
+////                    Message message = new Message();
+////                    message.what = 0;
+////                    message.obj=response.toString();
+////                    handler.sendMessage(message);
+//
+//
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//
+//            }
+//        });
+//    }
 
     private void initView() {
         //初始化控件
