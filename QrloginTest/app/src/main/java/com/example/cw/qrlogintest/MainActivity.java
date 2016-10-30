@@ -42,13 +42,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvResult;
 
     //登录接口
-    public  String loninUrl="http://lsuplus.top/api/v1/user";
+    public  String loninUrl="http://lsuplus.top/QRLogin/";
 
     //获取的账号
-    private String account=null;
+    private String account="";
 
     //获取的密码
-    private  String password=null;
+    private  String password="";
+
+    private String result;
 
     private Handler handler = new Handler(){
         public void handleMessage(Message msg){
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     sendHttpURLConnection();
                 }
-                
+
             }
         });
         btnScan.setOnClickListener(new View.OnClickListener() {
@@ -90,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void sendHttpURLConnection() {
         //开启子线程访问网络
         new Thread(new Runnable() {
@@ -103,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                     final String basicAuth = "Basic " + Base64.encodeToString(userpassword.getBytes(), Base64.NO_WRAP);
                     connection = (HttpURLConnection)url.openConnection();
                     connection.setRequestProperty ("Authorization", basicAuth);
-                    connection.setRequestMethod("GET");
+                    connection.setRequestMethod("POST");
                     connection.connect();
 
                     connection.setConnectTimeout(8000);
@@ -148,9 +151,56 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode== Activity.RESULT_OK){
-            String result= data.getExtras().getString("result");
+            result= data.getExtras().getString("result");
             tvResult.setText(result);
+            sendQrloginHttpURLConnection();
         }
+    }
+
+    private void sendQrloginHttpURLConnection() {
+        //开启子线程访问网络 扫码登录模块
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpURLConnection connection = null;
+
+                try {
+                    String userpassword = account+":"+password;
+                    URL url = new URL(loninUrl+result+"?userid=");
+                    final String basicAuth = "Basic " + Base64.encodeToString(userpassword.getBytes(), Base64.NO_WRAP);
+                    connection = (HttpURLConnection)url.openConnection();
+                    connection.setRequestProperty ("Authorization", basicAuth);
+                    connection.setRequestMethod("POST");
+                    connection.connect();
+
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(8000);
+//                    connection.setInstanceFollowRedirects(true);
+
+                    //获取输入流
+                    InputStream in = connection.getInputStream();
+
+                    //对获取的流进行读取
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
+                    StringBuilder response = new StringBuilder();
+                    String line=null;
+                    while ((line=reader.readLine())!=null){
+                        response.append(line);
+
+                    }
+
+                    Message message = new Message();
+                    message.what = 0;
+                    message.obj=response.toString();
+                    handler.sendMessage(message);
+
+
+                }   catch (Exception e) {
+                    Log.e("errss", e.getMessage());
+
+                }
+            }
+        }).start();
     }
 
 
